@@ -6,7 +6,7 @@ import soundfile as sf
 from pathlib import Path
 from tqdm import tqdm
 import math
-
+"데이터 캐글에서 바로 가져오는 코드 추가"
 
 def sound_load(path, target_sr=16000):
     # torchcodec 에러 발생..
