@@ -48,7 +48,8 @@ def train():
             noisy, clean = batch['input'].to(device), batch['label'].to(device)
             
             optimizer.zero_grad()
-            output = model(noisy)
+            mask = model(noisy)
+            output = mask * noisy
             loss = criterion(output, clean)
             loss.backward()
             optimizer.step()
@@ -65,7 +66,8 @@ def train():
             losses = []
             for batch in val_loader:
                 noisy, clean = batch['input'].to(device), batch['label'].to(device)
-                output = model(noisy)
+                mask = model(noisy)
+                output = mask * noisy
                 loss = criterion(output, clean)
                 losses.append(loss.item())
 
