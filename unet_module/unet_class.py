@@ -80,4 +80,4 @@ class UNet(nn.Module):
         d1 = torch.cat((d1, e1), dim=1) # e1 정보를 가져와 합침
         d1 = self.dec1(d1)
 
-        return self.final_conv(d1)
+        return torch.sigmoid(self.final_conv(d1))
