@@ -1,6 +1,8 @@
 import torch
 import os
 import sys
+import random
+import numpy as np
 from pathlib import Path
 
 # ✨ 상위 폴더 경로 추가 (모듈 import 에러 방지)
@@ -12,12 +14,23 @@ from unet_module.unet_class import UNet
 from dataloader_utils.data_loader import get_dataloaders
 from torchmetrics.audio.pesq import PerceptualEvaluationSpeechQuality
 from torchmetrics.audio.stoi import ShortTimeObjectiveIntelligibility
-
-# 🌟 질문자님의 프로젝트 구조에 맞게 postprocess 모듈에서 inverse_stft 임포트
 from postprocess_utils.audio_postprocess import inverse_stft
 
 BASE_DIR = Path(os.path.abspath(".."))
 
+# ================================================================
+# 테스트 환경에서의 재현성을 위한 글로벌 시드 고정
+# ================================================================
+def set_seed(seed):
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 
 class evaluator:
     def __init__(self, sample_rate=16000, device='cpu'):
@@ -46,6 +59,8 @@ class evaluator:
 
 
 def test(batch_size = 1):
+    set_seed(42)
+    
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"현재 사용 장치: {device}")
 
