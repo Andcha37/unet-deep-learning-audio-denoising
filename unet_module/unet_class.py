@@ -23,31 +23,31 @@ class UNet(nn.Module):
 
         # 1. 인코더 (Down-sampling)
         self.enc1 = ConvBlock(1, 64)   # 입력: 1채널 (스펙트로그램)
-        self.down1 = nn.Conv2d(64, 64, kernel_size=2, stride=2)  # convolution으로 다운샘플링
+        self.down1 = nn.Conv2d(64, 64, kernel_size=3, stride=2, padding=1)  # convolution으로 다운샘플링
 
         self.enc2 = ConvBlock(64, 128)
-        self.down2 = nn.Conv2d(128, 128, kernel_size=2, stride=2) # convolution으로 다운샘플링
+        self.down2 = nn.Conv2d(128, 128, kernel_size=3, stride=2, padding=1) # convolution으로 다운샘플링
 
         self.enc3 = ConvBlock(128, 256)
-        self.down3 = nn.Conv2d(256, 256, kernel_size=2, stride=2)
+        self.down3 = nn.Conv2d(256, 256, kernel_size=3, stride=2, padding=1)
 
         self.enc4 = ConvBlock(256, 512)
-        self.down4 = nn.Conv2d(512, 512, kernel_size=2, stride=2)
+        self.down4 = nn.Conv2d(512, 512, kernel_size=3, stride=2, padding=1)
 
         # 2. 바닥층 (Bottleneck)
         self.bottleneck = ConvBlock(512, 1024)
 
         # 3. 디코더 (Up-sampling & Skip Connection)
-        self.upconv4 = nn.ConvTranspose2d(1024, 512, kernel_size=2, stride=2)
+        self.upconv4 = nn.ConvTranspose2d(1024, 512, kernel_size=3, stride=2, padding=1, output_padding=1)
         self.dec4 = ConvBlock(1024, 512)
         
-        self.upconv3 = nn.ConvTranspose2d(512, 256, kernel_size=2, stride=2)
+        self.upconv3 = nn.ConvTranspose2d(512, 256, kernel_size=3, stride=2, padding=1, output_padding=1)
         self.dec3 = ConvBlock(512, 256)
 
-        self.upconv2 = nn.ConvTranspose2d(256, 128, kernel_size=2, stride=2)
+        self.upconv2 = nn.ConvTranspose2d(256, 128, kernel_size=3, stride=2, padding=1, output_padding=1)
         self.dec2 = ConvBlock(256, 128) # 128(upconv) + 128(skip) = 256
 
-        self.upconv1 = nn.ConvTranspose2d(128, 64, kernel_size=2, stride=2)
+        self.upconv1 = nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1, output_padding=1)
         self.dec1 = ConvBlock(128, 64)  # 64(upconv) + 64(skip) = 128
 
         # 4. 출력층 (최종 마스크 생성)
