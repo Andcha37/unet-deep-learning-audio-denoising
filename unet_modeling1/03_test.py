@@ -95,7 +95,8 @@ def test(batch_size = 1):
             noisy_phase = batch['phase'].to(device) 
 
             # 2. U-Net 예측 ([1, 1, 256, 256])
-            prediction_mag = model(noisy_mag)
+            mask = model(noisy_mag)
+            prediction_mag = mask * noisy_mag
 
             # 3. 4차원 모델 출력을 질문자님의 inverse_stft 3차원 스펙에 맞추기 위해 squeeze(1) 처리
             # [1, 1, 256, 256] -> [1, 256, 256]
