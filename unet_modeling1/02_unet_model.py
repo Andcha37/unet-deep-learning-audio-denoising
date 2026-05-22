@@ -73,10 +73,21 @@ def train():
     optimizer = optim.Adam(model.parameters(), lr=0.0001)  # betas=(0.9, 0.999) 파라미터로 사용 가능
 
     # 3. 학습 루프
-    num_epochs = 1   # 에폭 설정
+    num_epochs = 50   # 에폭 설정
+    start_epoch = 0
     best_val_loss = float('inf')  # 최저 검증 로스 기억할 변수
+    check_path = BASE_DIR / "modeling1_checkpoint.pth"
+    
+    if os.path.exists(check_path):
+        print("기존 체크포인트 모델 발견하여 이어서 학습 진행 중...")
+        checkpoint = torch.load(check_path, map_location=device)
+        model.load_state_dict(checkpoint['model'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        start_epoch = checkpoint['epoch'] + 1
+        best_val_loss = checkpoint['best_val_loss']
+        print(f"Resume Epoch : {start_epoch}")
 
-    for epoch in range(num_epochs):
+    for epoch in range(start_epoch, num_epochs):
         model.train()
         total_loss = 0
         for idx, batch in enumerate(train_loader):
@@ -112,8 +123,17 @@ def train():
         if val_loss_avg < best_val_loss:
             best_val_loss = val_loss_avg
 
-            torch.save(model.state_dict(), "unet_model.pth")
+            save_path = BASE_DIR / "modeling1_best_unet_model.pth"
+            torch.save(model.state_dict(), save_path)
             print(f"가장 최근 베스트모델 저장 완료 (Best Loss: {best_val_loss})")  
+        
+        # last (추가)
+        torch.save({
+            "model": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "epoch": epoch,
+            "best_val_loss": best_val_loss
+        }, check_path)
 
     print("학습 완료 및 모델 저장 성공!")
 

@@ -12,9 +12,6 @@ sys.path.append(parent_dir)
 
 from unet_module.unet_class import UNet
 from dataloader_utils.data_loader import get_dataloaders
-from torchmetrics.audio.pesq import PerceptualEvaluationSpeechQuality
-from torchmetrics.audio.stoi import ShortTimeObjectiveIntelligibility
-from postprocess_utils.audio_postprocess import inverse_stft
 
 BASE_DIR = Path(os.path.abspath(".."))
 
@@ -32,41 +29,18 @@ def set_seed(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-class evaluator:
-    def __init__(self, sample_rate=16000, device='cpu'):
-        self.sr = sample_rate
-        self.device = device
-
-        # 메인 음성 평가 지표 2개만 유지
-        self.pesq = PerceptualEvaluationSpeechQuality(fs=self.sr, mode='wb').to(device)
-        self.stoi = ShortTimeObjectiveIntelligibility(fs=self.sr).to(device)
-
-    def compute(self, preds: torch.Tensor, targets: torch.Tensor):
-        # inverse_stft 결과물인 2차원 [1, Time_samples]에서 
-        # 0번째 차원(Batch)만 정확하게 squeeze(0) 해줍니다. -> [Time_samples] 1차원 벡터 변환
-        if preds.ndim == 2 and preds.size(0) == 1:
-            preds = preds.squeeze(0)
-        if targets.ndim == 2 and targets.size(0) == 1:
-            targets = targets.squeeze(0)
-        
-        pesq_val = self.pesq(preds, targets)
-        stoi_val = self.stoi(preds, targets)
-
-        return {
-            "PESQ": round(pesq_val.item(), 4),
-            "STOI": round(stoi_val.item(), 4)
-        }
-
-
 def test(batch_size = 1):
     set_seed(42)
     
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f"현재 사용 장치: {device}")
 
-    model_path = BASE_DIR / "unet_model.pth"
+    model_path = BASE_DIR / "modeling1_best_unet_model.pth"
     model = UNet().to(device)
     model.load_state_dict(torch.load(model_path, map_location=device))
+
+    criterion = torch.nn.L1Loss()
+
     model.eval()
 
     clean_folder = BASE_DIR / "LibriSpeech"
@@ -80,39 +54,22 @@ def test(batch_size = 1):
         num_workers=4
     )
 
-    audio_eval = evaluator(sample_rate=16000, device=device)
-    total_metrics = {"PESQ": 0.0, "STOI": 0.0}
+    total_metrics = {"L1": 0.0}
     data_len = len(test_loader)
 
     print("테스트 시작...")
     with torch.no_grad():
         for batch in test_loader:
-            # 1. 스펙트로그램 데이터 로드 ([1, 1, 256, 256] 구조 가정)
+            # 스펙트로그램 데이터 로드 ([1, 1, 256, 256] 구조 가정)
             noisy_mag = batch['input'].to(device)
             clean_mag = batch['label'].to(device)
             
-            # 복원을 위한 위상(Phase) 데이터 꺼내기 (3차원 [1, 256, 256] 가정)
-            noisy_phase = batch['phase'].to(device) 
-
-            # 2. U-Net 예측 ([1, 1, 256, 256])
+            # U-Net 예측 ([1, 1, 256, 256])
             mask = model(noisy_mag)
             prediction_mag = mask * noisy_mag
 
-            # 3. 4차원 모델 출력을 질문자님의 inverse_stft 3차원 스펙에 맞추기 위해 squeeze(1) 처리
-            # [1, 1, 256, 256] -> [1, 256, 256]
-            pred_mag_3d = prediction_mag.squeeze(1)
-            clean_mag_3d = clean_mag.squeeze(1)
-
-            # inverse_stft 함수를 사용한 1D Waveform 음원 복원
-            # 출력 형태: [1, Time_samples] 2차원 텐서
-            pred_waveform = inverse_stft(pred_mag_3d, noisy_phase)
-            clean_waveform = inverse_stft(clean_mag_3d, noisy_phase)
-
-            # 5. 오차 측정 및 점수 환산
-            batch_metrics = audio_eval.compute(pred_waveform, clean_waveform)
-
-            for key in total_metrics:
-                total_metrics[key] += batch_metrics[key]
+            loss = criterion(prediction_mag, clean_mag)
+            total_metrics["L1"] += loss.item()
             
     print("=" * 50)
     print("Final Test Results")
