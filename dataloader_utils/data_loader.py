@@ -36,10 +36,10 @@ def get_dataloaders(clean_dir, noise_dir, batch_size=16, num_workers=4, split_ra
         generator=generator
     )
 
-    val_dataset.dataset = copy.copy(fulldataset)
+    val_dataset.dataset = copy.deepcopy(fulldataset)
     val_dataset.dataset.is_train = False
 
-    test_dataset.dataset = copy.copy(fulldataset)
+    test_dataset.dataset = copy.deepcopy(fulldataset)
     test_dataset.dataset.is_train = False
 
     val_loader = DataLoader(
