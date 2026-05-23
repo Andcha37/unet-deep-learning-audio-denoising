@@ -19,6 +19,7 @@ pesq, stoi 지표 확인하는 것에서 l1loss만 확인하는 것으로 간소
 ## unet_modeling2 folder
 원래 있던 모델링에서 더 성능 극대화하는 방향으로 코드 변경
 자세한 것은 해당 폴더 내의 readme 파일 확인 
+unet_module 폴더 내 파일 이용중
 
 ## unet_module2 folder
 원래 있던 unet_module 폴더의 unet_class에서
