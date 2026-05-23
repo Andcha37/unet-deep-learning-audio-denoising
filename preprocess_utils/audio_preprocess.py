@@ -78,13 +78,9 @@ def audio_merge(clean, noise):
     noise_scaled = noise_seg * (c_rms / ((10 ** (snr / 20)) * n_rms))
     mixed = clean + noise_scaled
 
-    # 클리핑 방지 및 정규화 (비율 유지)
-    max_amp = mixed.abs().max() + 1e-8
-
-    # mixed 볼륨이 1.0을 넘어서 클리핑이 발생할 때만 전체 볼륨을 줄여줌
-    if max_amp > 1.0:
-        mixed = mixed / max_amp
-        clean = clean / max_amp  # clean도 '동일한 값'으로 나누어 SNR 비율 유지!
+    # 클리핑 방지 및 정규화 (비율 유지)  
+    # 수정됨
+    mixed = torch.clamp(mixed, -1.0, 1.0)
 
     return clean, mixed
 
@@ -107,12 +103,8 @@ def audio_merge_eval(clean, noise):
     mixed = clean + noise_scaled
 
     # 클리핑 방지 및 정규화 (비율 유지)
-    max_amp = mixed.abs().max() + 1e-8
-
-    # mixed 볼륨이 1.0을 넘어서 클리핑이 발생할 때만 전체 볼륨을 줄여줌
-    if max_amp > 1.0:
-        mixed = mixed / max_amp
-        clean = clean / max_amp  # clean도 '동일한 값'으로 나누어 SNR 비율 유지!
+    # 수정됨
+    mixed = torch.clamp(mixed, -1.0, 1.0)
 
     return clean, mixed
 
