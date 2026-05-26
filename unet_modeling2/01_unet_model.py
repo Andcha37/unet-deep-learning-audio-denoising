@@ -206,8 +206,8 @@ def train():
                 output_mag_squeeze = output.squeeze(1).float()
                 clean_mag_squeeze = clean.squeeze(1).float()
 
-                pred_waveform = inverse_stft(output_mag_squeeze, noisy_phase.float())
-                clean_waveform = inverse_stft(clean_mag_squeeze, clean_phase.float())
+                pred_waveform = inverse_stft(output_mag_squeeze, noisy_phase.float()).squeeze(0)
+                clean_waveform = inverse_stft(clean_mag_squeeze, clean_phase.float()).squeeze(0)
 
                 # ================================================
                 # Audio Quality Metrics
