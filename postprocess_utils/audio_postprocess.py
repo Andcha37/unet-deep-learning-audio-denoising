@@ -2,6 +2,12 @@ import torch
 
 
 def inverse_stft(log_magnitude, phase, n_fft=512, hop_length=256):
+    if log_magnitude.ndim == 4:
+        log_magnitude = log_magnitude.squeeze(1).float()
+    if phase.ndim == 4:
+        phase = phase.squeeze(1).float()
+
+
     magnitude = (10 ** log_magnitude) - 1
 
     pad_mag = torch.cat([magnitude, torch.zeros(magnitude.shape[0], 1, magnitude.shape[-1]).to(magnitude.device)], dim=1)
