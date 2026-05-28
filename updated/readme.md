@@ -25,3 +25,11 @@ unet_module 폴더 내 파일 이용중
 원래 있던 unet_module 폴더의 unet_class에서 residential convblock 와 cbam 을 적용하는 것 추가<br>
 cbam은 residential 에 비해서 필요성에 대한 추후 논의 필요<br>
 완성될 시 unet_modeling3 를 통해 이 unet_class 적용하는 코드 추가
+
+
+## 2026-05-28
+postprocess_utils 모듈내에서 `audio_postprocess.py` 파일 내의 `inverse_stft` 함수에 대해 차원 제거하는 코드 추가함.
+    if log_magnitude.ndim == 4:
+        log_magnitude = log_magnitude.squeeze(1).float()
+    if phase.ndim == 4:
+        phase = phase.squeeze(1).float()
